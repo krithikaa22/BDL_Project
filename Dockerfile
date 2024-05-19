@@ -36,4 +36,10 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Copy project files
 COPY . /usr/src/app/
 
-CMD ["python", "code_api.py", "model.pkl"]
+FROM prom/prometheus
+
+COPY prometheus.yml /etc/prometheus.yml
+
+FROM grafana/grafana
+
+COPY defaults.ini /etc/defaults.ini
