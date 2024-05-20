@@ -1,7 +1,7 @@
 import imdb
 
 from fastapi import FastAPI, UploadFile, File
-from prometheus_client import Counter, Gauge, CollectorRegistry
+from prometheus_client import Counter, Gauge, CollectorRegistry, generate_latest
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import start_http_server
 import io
@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 import argparse
+from starlette.responses import Response
 
 import pickle
 
@@ -30,7 +31,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 app = FastAPI(title='Movie Review Sentiment Analysis')
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app).expose(app, include_in_schema=False, should_gzip=True)
 
 # Prometheus metrics
 custom_registry = CollectorRegistry()
@@ -167,13 +168,18 @@ async def predict(text:str):
     run_time = end_time - start_time
     
     # Record API usage metrics
-    # REQUEST_COUNTER.labels(client_ip).inc()         # Increment the request counter             
+    REQUEST_COUNTER.inc()         # Increment the request counter             
     RUN_TIME_GAUGE.set(run_time)                    # Set the running time gauge
 
     return {"Sentiment": sentiment}
+
+@app.get('/metrics')
+async def predict(text:str):
+    metrics= generate_latest(custom_registry)
+    return Response(content=metrics)
 
 if __name__ == '__main__':
     start_http_server(8000)
 
     # Running the web-application defined earlier
-    uvicorn.run("code_api:app",host='0.0.0.0', port=8000, reload=True)
+    uvicorn.run("code_api:app",host='127.0.0.1', port=8000, reload=True)

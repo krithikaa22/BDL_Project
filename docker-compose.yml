@@ -1,6 +1,14 @@
 version: '3.8'
 
 services:
+  sleek-airflow:
+    image: apache/airflow:latest
+    volumes:
+      - ./airflow:/opt/airflow
+    ports:
+      - "8002:8002" 
+    command: airflow standalone
+    
   fastapi_app:
     build: .
     image: api
@@ -20,7 +28,7 @@ services:
     image: grafana/grafana
     container_name: grafana
     ports:
-      - 3060:3000
+      - 3000:3000
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
